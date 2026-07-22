@@ -50,8 +50,8 @@ final class ReactionCoordinator {
 
     init() {
         locatorPipeline = PetLocatorPipeline(locators: [
-            WindowPetLocator(),
             AccessibilityPetLocator(),
+            WindowPetLocator(),
             ElectronSavedBoundsPetLocator()
         ])
     }
@@ -138,7 +138,7 @@ final class ReactionCoordinator {
     }
 
     private func startAnimation(_ kind: ReactionKind, at location: PetLocation) {
-        let petPosition = location.center
+        let petPosition = location.interactionAnchor
         let canvasSize = kind.canvasSize
         let panel = OverlayPanel(interactive: false)
         panel.setContent(

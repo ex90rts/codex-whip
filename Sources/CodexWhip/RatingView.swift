@@ -43,7 +43,7 @@ struct WelcomeView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Color(red: 0.22, green: 0.18, blue: 0.16))
 
-                Text("依次尝试 WindowServer、辅助功能和 Electron 保存位置")
+                Text("依次尝试辅助功能、WindowServer 和 Electron 保存位置")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }

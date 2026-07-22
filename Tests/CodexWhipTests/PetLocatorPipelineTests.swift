@@ -76,6 +76,70 @@ struct PetLocatorPipelineTests {
         let pipeline = PetLocatorPipeline(locators: [StubPetLocator(result: nil)])
         #expect(await pipeline.locatePet() == nil)
     }
+
+    @Test func locatesMascotInsideLegacyOverlayFromCodexLayout() {
+        let location = PetLocation(
+            frame: CGRect(x: 100, y: 200, width: 356, height: 320),
+            confidence: 0.93,
+            source: .window,
+            detail: "WindowServer window #23714, 356x320"
+        )
+
+        let anchor = location.interactionAnchor
+
+        #expect(abs(anchor.x - 372) < 0.001)
+        #expect(abs(anchor.y - 268.5) < 0.001)
+        #expect(anchor.x > location.center.x)
+        #expect(anchor.y < location.center.y)
+    }
+
+    @Test func keepsTightNativeCompositionWindowAtCenter() {
+        let location = PetLocation(
+            frame: CGRect(x: 100, y: 200, width: 243, height: 253),
+            confidence: 0.93,
+            source: .window,
+            detail: "WindowServer window #23714, 243x253"
+        )
+
+        #expect(location.interactionAnchor == location.center)
+    }
+
+    @Test func keepsAccessibilityElementCenterWhenFrameAlreadyLooksTight() {
+        let location = PetLocation(
+            frame: CGRect(x: 400, y: 500, width: 96, height: 108),
+            confidence: 0.94,
+            source: .accessibility,
+            detail: "pet image"
+        )
+
+        #expect(location.interactionAnchor == location.center)
+    }
+
+    @Test func treatsCurrentElectronStateAsMascotAnchor() {
+        let geometry = ElectronSavedBoundsPetLocator.persistedGeometry(from: [
+            "x": 100,
+            "y": 200
+        ])
+
+        #expect(geometry == PersistedPetGeometry(
+            quartzFrame: CGRect(x: 100, y: 200, width: 112, height: 121),
+            isMascotFrame: true
+        ))
+    }
+
+    @Test func preservesLegacyElectronWindowBounds() {
+        let geometry = ElectronSavedBoundsPetLocator.persistedGeometry(from: [
+            "x": 100,
+            "y": 200,
+            "width": 356,
+            "height": 320
+        ])
+
+        #expect(geometry == PersistedPetGeometry(
+            quartzFrame: CGRect(x: 100, y: 200, width: 356, height: 320),
+            isMascotFrame: false
+        ))
+    }
 }
 
 private struct StubPetLocator: PetLocating {

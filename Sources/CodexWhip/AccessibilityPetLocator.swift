@@ -3,18 +3,18 @@ import ApplicationServices
 
 struct AccessibilityPetLocator: PetLocating {
     private let applicationTokens = ["codex", "openai", "chatgpt"]
-    private let petTokens = ["pet", "avatar", "companion", "mascot", "宠物"]
+    private let petTokens = ["pet", "companion", "mascot", "宠物"]
 
     func locatePet() async -> PetLocation? {
         guard AXIsProcessTrusted() else { return nil }
 
         for application in matchingApplications() {
             let root = AXUIElementCreateApplication(application.processIdentifier)
-            if let window = bestTopLevelWindow(in: root) {
-                return window
-            }
             if let result = search(root: root) {
                 return result
+            }
+            if let window = bestTopLevelWindow(in: root) {
+                return window
             }
         }
         return nil
@@ -82,12 +82,13 @@ struct AccessibilityPetLocator: PetLocating {
         let text = descriptiveText(for: element).lowercased()
 
         let isVisualRole = role == kAXImageRole.lowercased()
+            || role == kAXButtonRole.lowercased()
             || role == kAXGroupRole.lowercased()
             || role.contains("canvas")
         guard isVisualRole, petTokens.contains(where: text.contains),
               let quartzFrame = frame(of: element),
-              quartzFrame.width >= 30, quartzFrame.height >= 30,
-              quartzFrame.width <= 520, quartzFrame.height <= 520,
+              quartzFrame.width >= 64, quartzFrame.height >= 64,
+              quartzFrame.width <= 260, quartzFrame.height <= 260,
               let appKitFrame = ScreenCoordinateConverter.appKitRect(fromQuartzRect: quartzFrame) else {
             return nil
         }

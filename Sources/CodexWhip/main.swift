@@ -30,8 +30,8 @@ enum CodexWhipApplication {
         if CommandLine.arguments.contains("--diagnose-pet-feedback") {
             let feedbackController = PetReactionController()
             let locatorPipeline = PetLocatorPipeline(locators: [
-                WindowPetLocator(),
                 AccessibilityPetLocator(),
+                WindowPetLocator(),
                 ElectronSavedBoundsPetLocator()
             ])
             Task {

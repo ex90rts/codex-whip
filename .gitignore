@@ -1,6 +1,9 @@
 # Swift
 .build/
+.build-scratch/
 .swiftpm/
+.swiftpm-cache/
+.cache/
 DerivedData/
 *.xcodeproj/
 xcuserdata/

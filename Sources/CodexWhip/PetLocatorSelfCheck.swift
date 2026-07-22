@@ -53,18 +53,41 @@ enum PetLocatorSelfCheck {
             alpha: 1,
             name: ""
         ))
+        let legacyAnchor = PetLocation(
+            frame: CGRect(x: 100, y: 200, width: 356, height: 320),
+            confidence: 0.93,
+            source: .window,
+            detail: "legacy overlay"
+        ).interactionAnchor
+        let nativeLocation = PetLocation(
+            frame: CGRect(x: 100, y: 200, width: 243, height: 253),
+            confidence: 0.93,
+            source: .window,
+            detail: "native composition"
+        )
+        let persistedMascot = ElectronSavedBoundsPetLocator.persistedGeometry(from: [
+            "x": 100,
+            "y": 200
+        ])
 
         guard selectsAutomatic,
               doesNotInventMousePosition,
               exactOverlayScore >= PetLocation.minimumConfidence,
               livePetWindowScore >= PetLocation.minimumConfidence,
               codexToolbarScore < PetLocation.minimumConfidence,
-              mainWindowScore < PetLocation.minimumConfidence else {
+              mainWindowScore < PetLocation.minimumConfidence,
+              abs(legacyAnchor.x - 372) < 0.001,
+              abs(legacyAnchor.y - 268.5) < 0.001,
+              nativeLocation.interactionAnchor == nativeLocation.center,
+              persistedMascot == PersistedPetGeometry(
+                  quartzFrame: CGRect(x: 100, y: 200, width: 112, height: 121),
+                  isMascotFrame: true
+              ) else {
             FileHandle.standardError.write(Data("Pet locator self-check failed\n".utf8))
             return false
         }
 
-        print("Pet locator self-check passed: overlay geometry selected; main window rejected; no mouse fallback")
+        print("Pet locator self-check passed: legacy, native, and persisted mascot geometry verified")
         return true
     }
 }

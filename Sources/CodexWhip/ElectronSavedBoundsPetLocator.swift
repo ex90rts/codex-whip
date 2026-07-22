@@ -76,6 +76,42 @@ struct ElectronSavedBoundsPetLocator: PetLocating {
     }
 
     static func location(from value: Any, detail: String) -> PetLocation? {
+        guard let geometry = persistedGeometry(from: value) else {
+            return nil
+        }
+
+        let geometryConfidence: Double
+        if geometry.isMascotFrame {
+            geometryConfidence = 0.70
+        } else {
+            let descriptor = WindowDescriptor(
+                id: 0,
+                quartzFrame: geometry.quartzFrame,
+                layer: 0,
+                alpha: 1,
+                name: "avatar"
+            )
+            geometryConfidence = PetOverlayWindowScorer.confidence(for: descriptor)
+            guard geometryConfidence >= PetLocation.minimumConfidence else {
+                return nil
+            }
+        }
+
+        guard let appKitFrame = ScreenCoordinateConverter.appKitRect(
+            fromQuartzRect: geometry.quartzFrame
+        ) else {
+            return nil
+        }
+
+        return PetLocation(
+            frame: appKitFrame,
+            confidence: min(geometryConfidence, 0.70),
+            source: .electronState,
+            detail: detail
+        )
+    }
+
+    static func persistedGeometry(from value: Any) -> PersistedPetGeometry? {
         let decodedValue: Any
         if let string = value as? String,
            let data = string.data(using: .utf8),
@@ -91,27 +127,25 @@ struct ElectronSavedBoundsPetLocator: PetLocating {
             return nil
         }
 
-        let width = number(named: "width", in: dictionary) ?? 356
-        let height = number(named: "height", in: dictionary) ?? 320
-        let quartzFrame = CGRect(x: x, y: y, width: width, height: height)
-        let descriptor = WindowDescriptor(
-            id: 0,
-            quartzFrame: quartzFrame,
-            layer: 0,
-            alpha: 1,
-            name: "avatar"
-        )
-        let geometryConfidence = PetOverlayWindowScorer.confidence(for: descriptor)
-        guard geometryConfidence >= PetLocation.minimumConfidence,
-              let appKitFrame = ScreenCoordinateConverter.appKitRect(fromQuartzRect: quartzFrame) else {
+        let width = number(named: "width", in: dictionary)
+        let height = number(named: "height", in: dictionary)
+        if width == nil && height == nil {
+            return PersistedPetGeometry(
+                quartzFrame: CGRect(
+                    origin: CGPoint(x: x, y: y),
+                    size: PetOverlayGeometry.defaultMascotSize
+                ),
+                isMascotFrame: true
+            )
+        }
+
+        guard let width, let height, width > 0, height > 0 else {
             return nil
         }
 
-        return PetLocation(
-            frame: appKitFrame,
-            confidence: min(geometryConfidence, 0.70),
-            source: .electronState,
-            detail: detail
+        return PersistedPetGeometry(
+            quartzFrame: CGRect(x: x, y: y, width: width, height: height),
+            isMascotFrame: false
         )
     }
 
@@ -120,4 +154,9 @@ struct ElectronSavedBoundsPetLocator: PetLocating {
         if let string = dictionary[key] as? String { return Double(string) }
         return nil
     }
+}
+
+struct PersistedPetGeometry: Equatable, Sendable {
+    let quartzFrame: CGRect
+    let isMascotFrame: Bool
 }

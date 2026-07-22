@@ -16,7 +16,7 @@ final class PetReactionController {
         if kind == .praise, enablesHover {
             // The cursor reaches the pet before the hand settles, giving the
             // native overlay a chance to run its own hover response.
-            hoverController.beginHover(atAppKitPoint: location.center, duration: 0.95)
+            hoverController.beginHover(atAppKitPoint: location.interactionAnchor, duration: 0.95)
         }
 
         if kind == .whip {
@@ -24,7 +24,7 @@ final class PetReactionController {
             motionTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: UInt64(firstImpactDelay * 1_000_000_000))
                 guard !Task.isCancelled, let self else { return }
-                self.hoverController.beginNativeDragShake(atAppKitPoint: location.center)
+                self.hoverController.beginNativeDragShake(atAppKitPoint: location.interactionAnchor)
             }
             let delayText = String(format: "%.3f", firstImpactDelay)
             writeDiagnostic(
